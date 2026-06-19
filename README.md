@@ -111,7 +111,7 @@ Same as above but each of the 6 faces independently zooms into a different bound
 
 ### opengl-cube-sphere-morph.lsp
 
-<video src="morphing.webm" autoplay loop muted width="640"></video>
+<video src="https://github.com/user-attachments/assets/832423e1-5283-42b1-ae57-dee24487c165" autoplay loop muted width="640"></video>
 
 A subdivided cube (8×8 quads per face = 768 triangles total) that continuously morphs between a cube and a sphere. Each of the 6 faces independently zooms into a different boundary region of the Mandelbrot set, exactly like the animated cube above — but the geometry underneath slowly transforms. Normals are interpolated so the Phong lighting stays correct throughout the morph.
 
