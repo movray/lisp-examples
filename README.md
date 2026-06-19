@@ -54,6 +54,22 @@ Rotating cube with Phong lighting (ambient + diffuse + specular). Introduces nor
 
 ---
 
+### opengl-colored-lighting.lsp
+Rotating cube combining per-face colors with Phong lighting. Each face has its own color (red, green, blue, yellow, cyan, magenta) lit by ambient + diffuse + specular.
+
+```lisp
+(load "/home/sugras/pproj/lisp/lisp-examples/opengl-colored-lighting.lsp")
+(cube-mandelbrot:start)
+```
+
+```lisp
+(setf cube-mandelbrot:*light-pos* '(2.0 2.0 2.0))   ; default
+(setf cube-mandelbrot:*light-pos* '(-2.0 3.0 1.0))  ; light from left
+(setf cube-mandelbrot:*running* nil)                 ; stop
+```
+
+---
+
 ### opengl-mandelbrot.lsp
 Mandelbrot set rendered in real-time entirely in the fragment shader. Each pixel independently computes whether it belongs to the set. Pan and zoom via REPL.
 
