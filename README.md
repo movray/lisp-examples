@@ -109,6 +109,34 @@ Same as above but each of the 6 faces independently zooms into a different bound
 
 ---
 
+### opengl-cube-sphere-morph.lsp
+A subdivided cube (8×8 quads per face = 768 triangles total) that continuously morphs between a cube and a sphere. Each of the 6 faces independently zooms into a different boundary region of the Mandelbrot set, exactly like the animated cube above — but the geometry underneath slowly transforms. Normals are interpolated so the Phong lighting stays correct throughout the morph.
+
+```lisp
+(load "/home/sugras/pproj/lisp/lisp-examples/opengl-cube-sphere-morph.lsp")
+(morph:start)
+```
+
+```lisp
+; control the morph directly (0.0 = cube, 1.0 = sphere)
+(setf morph:*morph* 0.0)             ; snap to cube
+(setf morph:*morph* 1.0)             ; snap to sphere
+(setf morph:*morph* 0.5)             ; halfway
+
+; auto-animation
+(setf morph:*morph-speed* 0.003)     ; default — slow morph cycle
+(setf morph:*morph-speed* 0.01)      ; faster
+(setf morph:*morph-speed* 0.0)       ; freeze morph, keep Mandelbrot animating
+
+; Mandelbrot and lighting
+(setf morph:*palette-speed* 0.02)    ; faster color flow
+(setf morph:*max-iter* 200)          ; more detail
+(setf morph:*light-pos* '(-2.0 3.0 2.0))
+(setf morph:*running* nil)           ; stop
+```
+
+---
+
 ### opengl-mandelbrot.lsp
 Mandelbrot set rendered in real-time entirely in the fragment shader. Each pixel independently computes whether it belongs to the set. Pan and zoom via REPL.
 
