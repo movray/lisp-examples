@@ -70,6 +70,43 @@ Rotating cube combining per-face colors with Phong lighting. Each face has its o
 
 ---
 
+### opengl-cube-mandelbrot.lsp
+Rotating cube with the Mandelbrot set mapped onto each face + Phong lighting. All faces share the same view. Pan, zoom and colors controllable via REPL.
+
+```lisp
+(load "/home/sugras/pproj/lisp/lisp-examples/opengl-cube-mandelbrot.lsp")
+(cube-mandelbrot:start)
+```
+
+```lisp
+(setf cube-mandelbrot:*zoom* 3.0)              ; zoom in
+(setf cube-mandelbrot:*center-x* -0.7435)     ; pan to seahorse valley
+(setf cube-mandelbrot:*center-y*  0.1314)
+(setf cube-mandelbrot:*max-iter* 200)          ; more detail
+(setf cube-mandelbrot:*palette-speed* 0.02)   ; faster color flow
+(setf cube-mandelbrot:*light-pos* '(-2.0 3.0 2.0))
+(setf cube-mandelbrot:*running* nil)           ; stop
+```
+
+---
+
+### opengl-cube-mandelbrot-animated.lsp
+Same as above but each of the 6 faces independently zooms into a different boundary point of the Mandelbrot set. Faces automatically wander along the boundary, zoom in and out, and cycle through interesting locations — all running simultaneously.
+
+```lisp
+(load "/home/sugras/pproj/lisp/lisp-examples/opengl-cube-mandelbrot-animated.lsp")
+(cube-mandelbrot:start)
+```
+
+```lisp
+(setf cube-mandelbrot:*palette-speed* 0.02)   ; faster color flow
+(setf cube-mandelbrot:*max-iter* 200)          ; more detail
+(setf cube-mandelbrot:*light-pos* '(-2.0 3.0 2.0))
+(setf cube-mandelbrot:*running* nil)           ; stop
+```
+
+---
+
 ### opengl-mandelbrot.lsp
 Mandelbrot set rendered in real-time entirely in the fragment shader. Each pixel independently computes whether it belongs to the set. Pan and zoom via REPL.
 

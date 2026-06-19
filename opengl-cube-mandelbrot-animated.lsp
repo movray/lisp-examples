@@ -4,8 +4,8 @@
   (:use #:cl)
   (:export #:run #:start #:*running*
            #:*angle* #:*light-pos*
-           #:*zoom* #:*center-x* #:*center-y* #:*max-iter*
-           #:*palette-offset* #:*palette-speed*))
+           #:*max-iter* #:*palette-offset* #:*palette-speed*
+           #:*face-states* #:*boundary-points*))
 
 (in-package #:cube-mandelbrot)
 
@@ -35,12 +35,12 @@ in vec3 vFragPos;
 in vec3 vNormal;
 in vec3 vLocalNormal;
 out vec4 FragColor;
-uniform float uZoom;
-uniform vec2  uCenter;
 uniform int   uMaxIter;
 uniform float uPaletteOffset;
 uniform vec3  uLightPos;
 uniform vec3  uViewPos;
+uniform vec2  uCenter[6];
+uniform float uZoom[6];
 void main() {
     // stable UV axes from local (pre-rotation) normal
     vec3 ln = abs(vLocalNormal);
@@ -49,7 +49,16 @@ void main() {
     else if (ln.x > 0.5) uv = vPos.yz;
     else                  uv = vPos.xz;
 
-    vec2 c = uv * 3.5 / uZoom + uCenter;
+    // face index from local normal
+    int fi;
+    if      (vLocalNormal.z >  0.5) fi = 0;
+    else if (vLocalNormal.z < -0.5) fi = 1;
+    else if (vLocalNormal.x < -0.5) fi = 2;
+    else if (vLocalNormal.x >  0.5) fi = 3;
+    else if (vLocalNormal.y < -0.5) fi = 4;
+    else                             fi = 5;
+
+    vec2 c = uv * 3.5 / uZoom[fi] + uCenter[fi];
     vec2 z = vec2(0.0);
     int i;
     for (i = 0; i < uMaxIter; i++) {
@@ -124,10 +133,58 @@ void main() {
      16 17 18  18 19 16   20 21 22  22 23 20)
    '(simple-array (unsigned-byte 32) (*))))
 
+;;; known interesting boundary points
+(defparameter *boundary-points*
+  #((-0.7435 .  0.1314)
+    (-0.7269 .  0.1889)
+    (-0.7491 .  0.0820)
+    (-0.1015 .  0.6327)
+    (-0.5251 .  0.5253)
+    (-1.2523 .  0.0000)
+    ( 0.2800 .  0.0100)
+    (-0.1592 .  1.0317)))
+
+;;; per-face state: plist with :cx :cy :zoom :max-zoom :speed :dir :point-idx
+(defun make-face-state (point-idx speed max-zoom)
+  (let ((pt (aref *boundary-points* point-idx)))
+    (list :cx       (float (car pt) 1.0)
+          :cy       (float (cdr pt) 1.0)
+          :zoom     1.5
+          :max-zoom (float max-zoom 1.0)
+          :speed    (float speed 1.0)
+          :dir      1
+          :point-idx point-idx)))
+
+(defparameter *face-states*
+  (vector (make-face-state 0 0.004  60.0)
+          (make-face-state 1 0.003  80.0)
+          (make-face-state 2 0.005  45.0)
+          (make-face-state 3 0.0025 100.0)
+          (make-face-state 4 0.006  55.0)
+          (make-face-state 5 0.0035 70.0)))
+
+(defun update-face! (face)
+  (let* ((zoom      (getf face :zoom))
+         (dir       (getf face :dir))
+         (speed     (getf face :speed))
+         (max-zoom  (getf face :max-zoom))
+         (new-zoom  (if (= dir 1)
+                        (* zoom (+ 1.0 speed))
+                        (/ zoom (+ 1.0 speed)))))
+    (cond
+      ((and (= dir 1) (> new-zoom max-zoom))
+       (setf (getf face :dir) -1))
+      ((and (= dir -1) (< new-zoom 1.5))
+       (let* ((next (mod (1+ (getf face :point-idx)) (length *boundary-points*)))
+              (pt   (aref *boundary-points* next)))
+         (setf (getf face :point-idx) next
+               (getf face :cx)        (float (car pt) 1.0)
+               (getf face :cy)        (float (cdr pt) 1.0)
+               (getf face :dir)       1
+               new-zoom               1.5))))
+    (setf (getf face :zoom) (float new-zoom 1.0))))
+
 (defparameter *angle*          0.0)
-(defparameter *zoom*           1.0)
-(defparameter *center-x*      -0.5)
-(defparameter *center-y*       0.0)
 (defparameter *max-iter*       100)
 (defparameter *palette-offset* 0.0)
 (defparameter *palette-speed*  0.005)
@@ -176,12 +233,19 @@ void main() {
            (ebo         (first (gl:gen-buffers 1)))
            (mvp-loc     (gl:get-uniform-location program "uMVP"))
            (model-loc   (gl:get-uniform-location program "uModel"))
-           (zoom-loc    (gl:get-uniform-location program "uZoom"))
-           (center-loc  (gl:get-uniform-location program "uCenter"))
            (iter-loc    (gl:get-uniform-location program "uMaxIter"))
            (palette-loc (gl:get-uniform-location program "uPaletteOffset"))
            (light-loc   (gl:get-uniform-location program "uLightPos"))
-           (view-loc    (gl:get-uniform-location program "uViewPos")))
+           (view-loc    (gl:get-uniform-location program "uViewPos"))
+           ;; per-face uniform locations
+           (center-locs (map 'vector
+                             (lambda (i) (gl:get-uniform-location
+                                          program (format nil "uCenter[~a]" i)))
+                             #(0 1 2 3 4 5)))
+           (zoom-locs   (map 'vector
+                             (lambda (i) (gl:get-uniform-location
+                                          program (format nil "uZoom[~a]" i)))
+                             #(0 1 2 3 4 5))))
 
       (gl:bind-vertex-array vao)
 
@@ -212,6 +276,10 @@ void main() {
             do (progn
                  (incf *angle* 0.5)
                  (incf *palette-offset* *palette-speed*)
+
+                 ;; update all 6 face zoom animations
+                 (dotimes (i 6) (update-face! (aref *face-states* i)))
+
                  (gl:clear-color 0.05 0.05 0.05 1.0)
                  (gl:clear :color-buffer-bit :depth-buffer-bit)
                  (gl:use-program program)
@@ -225,15 +293,22 @@ void main() {
                         (mvp   (3d-matrices:m* proj view model)))
                    (gl:uniform-matrix-4fv mvp-loc   (3d-matrices:marr mvp)   t)
                    (gl:uniform-matrix-4fv model-loc (3d-matrices:marr model) t)
-                   (gl:uniformf zoom-loc    *zoom*)
-                   (gl:uniformf center-loc  *center-x* *center-y*)
                    (gl:uniformi iter-loc    *max-iter*)
                    (gl:uniformf palette-loc *palette-offset*)
                    (gl:uniformf light-loc
                                 (first *light-pos*)
                                 (second *light-pos*)
                                 (third *light-pos*))
-                   (gl:uniformf view-loc 0.0 0.0 3.0))
+                   (gl:uniformf view-loc 0.0 0.0 3.0)
+
+                   ;; pass per-face center and zoom
+                   (dotimes (i 6)
+                     (let ((face (aref *face-states* i)))
+                       (gl:uniformf (aref center-locs i)
+                                    (getf face :cx)
+                                    (getf face :cy))
+                       (gl:uniformf (aref zoom-locs i)
+                                    (getf face :zoom)))))
 
                  (gl:bind-vertex-array vao)
                  (%gl:draw-elements :triangles (length *indices*)
