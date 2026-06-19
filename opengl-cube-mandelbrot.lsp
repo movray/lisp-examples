@@ -4,7 +4,8 @@
   (:use #:cl)
   (:export #:run #:start #:*running*
            #:*angle* #:*light-pos*
-           #:*zoom* #:*center-x* #:*center-y* #:*max-iter*))
+           #:*zoom* #:*center-x* #:*center-y* #:*max-iter*
+           #:*palette-offset* #:*palette-speed*))
 
 (in-package #:cube-mandelbrot)
 
@@ -39,6 +40,7 @@ uniform vec2  uCenter;
 uniform int   uMaxIter;
 uniform vec3  uLightPos;
 uniform vec3  uViewPos;
+uniform float uPaletteOffset;
 void main() {
     // use local (pre-rotation) normal for stable UV axis selection
     vec3 n = abs(vLocalNormal);
@@ -61,7 +63,7 @@ void main() {
     } else {
         float t = float(i) - log2(log2(dot(z,z))) + 4.0;
         t = t / float(uMaxIter);
-        color = 0.5 + 0.5 * cos(6.28318 * (t + vec3(0.0, 0.33, 0.67)));
+        color = 0.5 + 0.5 * cos(6.28318 * (t + uPaletteOffset + vec3(0.0, 0.33, 0.67)));
     }
 
     // phong lighting with mandelbrot color as material
@@ -123,13 +125,15 @@ void main() {
      16 17 18  18 19 16   20 21 22  22 23 20)
    '(simple-array (unsigned-byte 32) (*))))
 
-(defparameter *angle*    0.0)
-(defparameter *zoom*     1.0)
-(defparameter *center-x* -0.5)
-(defparameter *center-y*  0.0)
-(defparameter *max-iter* 100)
-(defparameter *light-pos* '(2.0 2.0 2.0))
-(defparameter *running*   t)
+(defparameter *angle*          0.0)
+(defparameter *zoom*           1.0)
+(defparameter *center-x*      -0.5)
+(defparameter *center-y*       0.0)
+(defparameter *max-iter*       100)
+(defparameter *palette-offset* 0.0)
+(defparameter *palette-speed*  0.005)
+(defparameter *light-pos*     '(2.0 2.0 2.0))
+(defparameter *running*        t)
 
 (defun make-shader (type source)
   (let ((shader (gl:create-shader type)))
@@ -176,8 +180,9 @@ void main() {
            (zoom-loc   (gl:get-uniform-location program "uZoom"))
            (center-loc (gl:get-uniform-location program "uCenter"))
            (iter-loc   (gl:get-uniform-location program "uMaxIter"))
-           (light-loc  (gl:get-uniform-location program "uLightPos"))
-           (view-loc   (gl:get-uniform-location program "uViewPos")))
+           (light-loc   (gl:get-uniform-location program "uLightPos"))
+           (view-loc    (gl:get-uniform-location program "uViewPos"))
+           (palette-loc (gl:get-uniform-location program "uPaletteOffset")))
 
       (gl:bind-vertex-array vao)
 
@@ -207,6 +212,7 @@ void main() {
       (loop while (and *running* (not (glfw:window-should-close-p)))
             do (progn
                  (incf *angle* 0.5)
+                 (incf *palette-offset* *palette-speed*)
                  (gl:clear-color 0.05 0.05 0.05 1.0)
                  (gl:clear :color-buffer-bit :depth-buffer-bit)
                  (gl:use-program program)
@@ -227,7 +233,8 @@ void main() {
                                 (first *light-pos*)
                                 (second *light-pos*)
                                 (third *light-pos*))
-                   (gl:uniformf view-loc 0.0 0.0 3.0))
+                   (gl:uniformf view-loc    0.0 0.0 3.0)
+                   (gl:uniformf palette-loc *palette-offset*))
 
                  (gl:bind-vertex-array vao)
                  (%gl:draw-elements :triangles (length *indices*)
