@@ -93,6 +93,8 @@ Rotating cube with the Mandelbrot set mapped onto each face + Phong lighting. Al
 ### opengl-cube-mandelbrot-animated.lsp
 Same as above but each of the 6 faces independently zooms into a different boundary point of the Mandelbrot set. Faces automatically wander along the boundary, zoom in and out, and cycle through interesting locations — all running simultaneously.
 
+![Mandelbrot Animated Cube](mandelbrot-animated.png)
+
 ```lisp
 (load "/home/sugras/pproj/lisp/lisp-examples/opengl-cube-mandelbrot-animated.lsp")
 (cube-mandelbrot:start)
