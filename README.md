@@ -51,3 +51,22 @@ Rotating cube with Phong lighting (ambient + diffuse + specular). Introduces nor
 (setf lighting:*light-pos* '(-2.0 2.0 2.0))  ; light from left
 (setf lighting:*light-pos* '(0.0 5.0 0.0))   ; light from above
 ```
+
+---
+
+### opengl-mandelbrot.lsp
+Mandelbrot set rendered in real-time entirely in the fragment shader. Each pixel independently computes whether it belongs to the set. Pan and zoom via REPL.
+
+```lisp
+(load "/home/sugras/pproj/lisp/lisp-examples/opengl-mandelbrot.lsp")
+(mandelbrot:start)
+```
+
+```lisp
+(setf mandelbrot:*zoom* 2.0)                ; zoom in
+(setf mandelbrot:*zoom* 0.5)                ; zoom out
+(setf mandelbrot:*center-x* -0.7)          ; pan left
+(setf mandelbrot:*center-y*  0.27)         ; pan up
+(setf mandelbrot:*max-iter* 200)           ; more detail
+(setf mandelbrot:*running* nil)            ; stop
+```
