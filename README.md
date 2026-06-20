@@ -17,6 +17,9 @@ M-x slime
 ## Examples
 
 ### opengl-cube-blue-waves.lsp
+
+<video src="https://github.com/user-attachments/assets/1b4d35d6-cdc1-4dbb-b5a0-0de365a87338" autoplay loop muted width="640"></video>
+
 Rotating 3D cube with a procedural animated water shader.
 
 ```lisp
