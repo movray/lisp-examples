@@ -162,6 +162,29 @@ Mandelbrot set rendered in real-time entirely in the fragment shader. Each pixel
 
 ---
 
+### opengl-lorenz.lsp
+
+<video src="https://github.com/user-attachments/assets/e2931641-7065-45f6-8842-38a7149d3ade" autoplay loop muted width="640"></video>
+
+The Lorenz attractor — a classic example of chaos theory. The system is defined by three coupled differential equations (σ=10, ρ=28, β=8/3) that produce a trajectory which never repeats but stays bounded in a butterfly-shaped region of space. The equations are integrated with RK4 on the CPU (200,000 steps), the resulting point cloud is uploaded as a line strip to the GPU, and colored by height using a flowing cosine palette.
+
+```lisp
+(load "/home/sugras/pproj/lisp/lisp-examples/opengl-lorenz.lsp")
+(lorenz:start)
+```
+
+```lisp
+(setf lorenz:*palette-speed* 0.02)   ; faster color flow
+(setf lorenz:*speed* 0.3)            ; faster rotation
+(setf lorenz:*speed* 0.0)            ; freeze rotation
+(setf lorenz:*n-points* 50000)       ; fewer lines, more visible structure
+(setf lorenz:*running* nil)          ; stop
+; after changing *n-points*, *sigma*, *rho* or *beta*: restart
+(lorenz:start)
+```
+
+---
+
 ### teapot-data.lsp + opengl-teapot.lsp
 
 <video src="https://github.com/user-attachments/assets/7449a1eb-985e-44d5-a832-3468a2f0b452" autoplay loop muted width="640"></video>
