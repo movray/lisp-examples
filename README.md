@@ -156,3 +156,27 @@ Mandelbrot set rendered in real-time entirely in the fragment shader. Each pixel
 (setf mandelbrot:*max-iter* 200)           ; more detail
 (setf mandelbrot:*running* nil)            ; stop
 ```
+
+---
+
+### teapot-data.lsp + opengl-teapot.lsp
+
+<video src="https://github.com/user-attachments/assets/7449a1eb-985e-44d5-a832-3468a2f0b452" autoplay loop muted width="640"></video>
+
+The classic Utah Teapot (Martin Newell, 1975) — the "Hello World" of 3D graphics. The geometry is defined by 32 bicubic Bézier patches with 306 control points. The Lisp code tessellates the patches on the CPU (evaluating the Bernstein basis polynomials and computing surface normals analytically), then uploads the resulting triangle mesh to the GPU for Phong rendering.
+
+`teapot-data.lsp` is the geometry foundation (no OpenGL — just the math). `opengl-teapot.lsp` loads it and renders.
+
+```lisp
+(load "/home/sugras/pproj/lisp/lisp-examples/opengl-teapot.lsp")
+(glteapot:start)
+```
+
+```lisp
+(setf glteapot:*color* '(0.85 0.55 0.2))    ; warm clay (default)
+(setf glteapot:*color* '(0.2 0.6 0.9))      ; blue
+(setf glteapot:*color* '(0.9 0.9 0.9))      ; white/silver
+(setf glteapot:*light-pos* '(4.0 6.0 4.0))  ; default
+(setf glteapot:*light-pos* '(-6.0 8.0 2.0)) ; light from left
+(setf glteapot:*running* nil)                ; stop
+```
